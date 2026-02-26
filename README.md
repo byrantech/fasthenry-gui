@@ -4,7 +4,8 @@ FastHenry is a three-dimensional inductance extraction program developed at the 
 
 This repository contains the 3.0wr branch maintained by Stephen R. Whiteley (Whiteley Research Inc.), which extends the original MIT release with superconductor support, performance improvements, modern platform compatibility, and a ***vibe-coded*** web-based 3D graphical editor for building and running FastHenry models interactively.
 
----
+![GUI 3D](doc/gui-3d.jpg)
+![GUI Panel](doc/gui-panel.jpg)
 
 ## Web-Based 3D GUI
 
@@ -12,8 +13,6 @@ This repository contains the 3.0wr branch maintained by Stephen R. Whiteley (Whi
 - Visual model building
 - STEP/CAD import (experimental)
 - Results visualization
-
----
 
 ## Quick Start
 
