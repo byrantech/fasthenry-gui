@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FastHenry 3D Editor</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header id="toolbar">
+    <div class="toolbar-left">
+      <h1>FastHenry 3D</h1>
+      <div class="mode-buttons">
+        <button class="mode-btn active" data-mode="select" title="Select objects">Select</button>
+        <button class="mode-btn" data-mode="addNode" title="Click on grid to place nodes">+ Node</button>
+        <button class="mode-btn" data-mode="addSegment" title="Click two nodes to connect">+ Segment</button>
+      </div>
+      <div class="separator"></div>
+      <div class="view-buttons">
+        <button class="view-btn" id="btn-fit" title="Fit all (F)">Fit</button>
+        <button class="view-btn" id="btn-top" title="Top view (Z)">Top</button>
+        <button class="view-btn" id="btn-front" title="Front view">Front</button>
+        <button class="view-btn" id="btn-right" title="Right view">Right</button>
+        <button class="view-btn" id="btn-iso" title="Isometric view">Iso</button>
+      </div>
+      <div class="separator"></div>
+      <div class="layout-buttons">
+        <button class="layout-btn active" data-layout="split" title="Split view">Split</button>
+        <button class="layout-btn" data-layout="full3d" title="Full 3D viewport">3D</button>
+        <button class="layout-btn" data-layout="fullpanel" title="Full panel view">Panel</button>
+      </div>
+      <div class="panel-width-controls" id="panel-width-controls" style="display:none">
+        <label for="panel-width-range">Panel width</label>
+        <input type="range" id="panel-width-range" min="600" max="1600" step="20" value="800">
+        <span id="panel-width-value">800px</span>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <span id="status-text">Ready — RMB: orbit, MMB: pan, scroll: zoom</span>
+    </div>
+  </header>
+
+  <main id="app-layout">
+    <div id="viewport-container">
+      <canvas id="viewport"></canvas>
+      <div id="viewport-overlay">
+        <span id="coord-display"></span>
+      </div>
+    </div>
+
+    <div id="sidebar-resizer"></div>
+    <aside id="sidebar">
+      <div class="sidebar-scroll">
+
+        <!-- Properties (shown when object selected) -->
+        <section class="panel highlight-panel" id="properties-panel" style="display:none">
+          <div class="panel-header">
+            Properties
+            <button class="btn-sm btn-outline" id="btn-deselect" style="padding:2px 8px;font-size:10px">✕</button>
+          </div>
+          <div class="panel-body" id="properties-body"></div>
+        </section>
+
+        <!-- Display Settings -->
+        <section class="panel collapsed" data-panel="display">
+          <div class="panel-header" data-toggle="display">Display</div>
+          <div class="panel-body">
+            <div class="form-row">
+              <label>Node Size</label>
+              <input type="range" id="disp-node-size" min="0.2" max="4" step="0.1" value="1" class="range-input">
+              <span class="range-val" id="disp-node-size-val">1.0</span>
+            </div>
+            <div class="form-row">
+              <label>Label Size</label>
+              <input type="range" id="disp-label-size" min="0.2" max="4" step="0.1" value="1" class="range-input">
+              <span class="range-val" id="disp-label-size-val">1.0</span>
+            </div>
+            <div class="form-row">
+              <label>Show Labels</label>
+              <input type="checkbox" id="disp-labels" checked class="chk-input">
+            </div>
+            <div class="form-row">
+              <label>Node Color</label>
+              <input type="color" id="disp-node-color" value="#3fb950" class="color-input">
+            </div>
+            <div class="form-row">
+              <label>Seg Color</label>
+              <input type="color" id="disp-seg-color" value="#4493f8" class="color-input">
+            </div>
+            <div class="form-row">
+              <label>Seg Opacity</label>
+              <input type="range" id="disp-seg-opacity" min="0.1" max="1" step="0.05" value="0.75" class="range-input">
+              <span class="range-val" id="disp-seg-opacity-val">0.75</span>
+            </div>
+            <div class="form-row">
+              <label>GP Opacity</label>
+              <input type="range" id="disp-gp-opacity" min="0.05" max="0.8" step="0.05" value="0.3" class="range-input">
+              <span class="range-val" id="disp-gp-opacity-val">0.30</span>
+            </div>
+            <div class="form-row">
+              <label>Show Grid</label>
+              <input type="checkbox" id="disp-grid" checked class="chk-input">
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="config">
+          <div class="panel-header" data-toggle="config">Configuration</div>
+          <div class="panel-body">
+            <div class="form-row">
+              <label>Units</label>
+              <select id="inp-units">
+                <option value="m">m</option>
+                <option value="cm">cm</option>
+                <option value="mm" selected>mm</option>
+                <option value="um">um</option>
+                <option value="mils">mils</option>
+                <option value="in">in</option>
+                <option value="km">km</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Default w</label>
+              <input type="number" id="def-w" value="1" step="any">
+            </div>
+            <div class="form-row">
+              <label>Default h</label>
+              <input type="number" id="def-h" value="0.5" step="any">
+            </div>
+            <div class="form-row">
+              <label>Default sigma</label>
+              <input type="number" id="def-sigma" value="5.8e4" step="any">
+            </div>
+            <div class="form-row">
+              <label>Default nwinc</label>
+              <input type="number" id="def-nwinc" value="1" min="1" step="1">
+            </div>
+            <div class="form-row">
+              <label>Default nhinc</label>
+              <input type="number" id="def-nhinc" value="1" min="1" step="1">
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="nodes">
+          <div class="panel-header" data-toggle="nodes">
+            Nodes <span class="badge" id="node-count">0</span>
+          </div>
+          <div class="panel-body">
+            <div class="inline-form" id="add-node-form">
+              <input type="text" id="node-name" placeholder="Name (auto)" class="input-sm">
+              <input type="number" id="node-x" placeholder="X" step="any" class="input-sm">
+              <input type="number" id="node-y" placeholder="Y" step="any" class="input-sm">
+              <input type="number" id="node-z" placeholder="Z" value="0" step="any" class="input-sm">
+              <button id="btn-add-node" class="btn btn-sm btn-accent">Add</button>
+            </div>
+            <div id="node-list" class="item-list"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="segments">
+          <div class="panel-header" data-toggle="segments">
+            Segments <span class="badge" id="seg-count">0</span>
+          </div>
+          <div class="panel-body">
+            <div class="inline-form" id="add-seg-form">
+              <select id="seg-node1" class="input-sm"><option value="">Node 1</option></select>
+              <select id="seg-node2" class="input-sm"><option value="">Node 2</option></select>
+              <input type="number" id="seg-w" placeholder="w" step="any" class="input-sm">
+              <input type="number" id="seg-h" placeholder="h" step="any" class="input-sm">
+              <button id="btn-add-seg" class="btn btn-sm btn-accent">Add</button>
+            </div>
+            <div id="seg-list" class="item-list"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="gp">
+          <div class="panel-header" data-toggle="gp">
+            Ground Planes <span class="badge" id="gp-count">0</span>
+          </div>
+          <div class="panel-body">
+            <div class="compact-form" id="add-gp-form">
+              <div class="form-row">
+                <label>Corner 1</label>
+                <input type="number" id="gp-x1" placeholder="x1" step="any" class="input-sm">
+                <input type="number" id="gp-y1" placeholder="y1" step="any" class="input-sm">
+                <input type="number" id="gp-z1" placeholder="z1" value="0" step="any" class="input-sm">
+              </div>
+              <div class="form-row">
+                <label>Corner 2</label>
+                <input type="number" id="gp-x2" placeholder="x2" step="any" class="input-sm">
+                <input type="number" id="gp-y2" placeholder="y2" step="any" class="input-sm">
+                <input type="number" id="gp-z2" placeholder="z2" value="0" step="any" class="input-sm">
+              </div>
+              <div class="form-row">
+                <label>Corner 3</label>
+                <input type="number" id="gp-x3" placeholder="x3" step="any" class="input-sm">
+                <input type="number" id="gp-y3" placeholder="y3" step="any" class="input-sm">
+                <input type="number" id="gp-z3" placeholder="z3" value="0" step="any" class="input-sm">
+              </div>
+              <div class="form-row">
+                <label>Thickness</label>
+                <input type="number" id="gp-thick" placeholder="thick" step="any" class="input-sm">
+              </div>
+              <div class="form-row">
+                <label>Segments</label>
+                <input type="number" id="gp-seg1" placeholder="seg1" value="10" min="1" class="input-sm">
+                <input type="number" id="gp-seg2" placeholder="seg2" value="10" min="1" class="input-sm">
+              </div>
+              <button id="btn-add-gp" class="btn btn-sm btn-accent" style="width:100%">Add Ground Plane</button>
+            </div>
+            <div id="gp-list" class="item-list"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="externals">
+          <div class="panel-header" data-toggle="externals">
+            External Ports <span class="badge" id="ext-count">0</span>
+          </div>
+          <div class="panel-body">
+            <div class="inline-form" id="add-ext-form">
+              <select id="ext-node1" class="input-sm"><option value="">+ Node</option></select>
+              <select id="ext-node2" class="input-sm"><option value="">- Node</option></select>
+              <input type="text" id="ext-name" placeholder="Port name" class="input-sm">
+              <button id="btn-add-ext" class="btn btn-sm btn-accent">Add</button>
+            </div>
+            <div id="ext-list" class="item-list"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="equiv">
+          <div class="panel-header" data-toggle="equiv">
+            Equivalences <span class="badge" id="equiv-count">0</span>
+          </div>
+          <div class="panel-body">
+            <div class="inline-form" id="add-equiv-form">
+              <input type="text" id="equiv-nodes" placeholder="node1 node2 ..." class="input-sm" style="flex:3">
+              <button id="btn-add-equiv" class="btn btn-sm btn-accent">Add</button>
+            </div>
+            <div id="equiv-list" class="item-list"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="freq">
+          <div class="panel-header" data-toggle="freq">Frequency</div>
+          <div class="panel-body">
+            <div class="form-row">
+              <label>fmin</label>
+              <input type="text" id="freq-fmin" value="10 kHz" class="freq-input">
+              <span class="freq-hint" id="freq-fmin-hint"></span>
+            </div>
+            <div class="form-row">
+              <label>fmax</label>
+              <input type="text" id="freq-fmax" value="100 MHz" class="freq-input">
+              <span class="freq-hint" id="freq-fmax-hint"></span>
+            </div>
+            <div class="form-row">
+              <label>ndec</label>
+              <input type="number" id="freq-ndec" value="1" step="any" min="0">
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="solver">
+          <div class="panel-header" data-toggle="solver">Solver Options</div>
+          <div class="panel-body">
+            <div class="form-row">
+              <label>Method</label>
+              <select id="opt-solver">
+                <option value="">Default (iterative)</option>
+                <option value="ludecomp">LU Decomposition</option>
+                <option value="iterative">Iterative (GMRES)</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Mat-Vec</label>
+              <select id="opt-matvec">
+                <option value="">Default (multipole)</option>
+                <option value="direct">Direct</option>
+                <option value="multi">Multipole</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Tolerance</label>
+              <input type="number" id="opt-tol" placeholder="1e-3" step="any">
+            </div>
+            <div class="form-row">
+              <label>Max Iterations</label>
+              <input type="number" id="opt-maxiters" placeholder="200" step="1">
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="io">
+          <div class="panel-header" data-toggle="io">Import / Export</div>
+          <div class="panel-body">
+            <div class="btn-group">
+              <button id="btn-import" class="btn btn-outline">Import .inp</button>
+              <button id="btn-import-step" class="btn btn-outline">Import STEP (experimental)</button>
+              <button id="btn-export" class="btn btn-outline">Export .inp</button>
+              <select id="example-select" class="input-sm" style="margin-top:6px">
+                <option value="">Load Example...</option>
+              </select>
+            </div>
+            <input type="file" id="file-input" accept=".inp" style="display:none">
+            <input type="file" id="step-input" accept=".step,.stp,.STEP,.STP" style="display:none">
+          </div>
+        </section>
+
+        <section class="panel run-panel">
+          <button id="btn-run" class="btn btn-run">Run FastHenry</button>
+        </section>
+
+        <section class="panel" data-panel="results" id="results-panel" style="display:none">
+          <div class="panel-header" data-toggle="results">Results</div>
+          <div class="panel-body">
+            <div id="results-info"></div>
+            <div class="chart-container">
+              <canvas id="chart-resistance"></canvas>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-inductance"></canvas>
+            </div>
+            <div id="impedance-tables"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="console" id="console-panel" style="display:none">
+          <div class="panel-header" data-toggle="console">Console Output</div>
+          <div class="panel-body">
+            <pre id="console-output"></pre>
+          </div>
+        </section>
+
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
