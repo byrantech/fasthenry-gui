@@ -1,5 +1,7 @@
 # FastHenry Inductance Simulation GUI
 
+> _GUI built with Claude Opus 4.6. FastHenry core unchanged from `3.0wr`._
+
 FastHenry extracts pure inductance, frequency-dependent self + mutual inductances, resistances between conductors of 3D bodies.
 
 This repository contains the 3.0wr branch from Whiteley Research which extends the original MIT release with superconductor support, modern improvements. A ***vibe-coded*** web-based 3D GUI is appended by myself.
