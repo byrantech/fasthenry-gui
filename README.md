@@ -1,8 +1,8 @@
-# FastHenry 3.0wr — 3D Inductance Extraction with Web GUI
+# FastHenry Inductance Simulation GUI
 
-FastHenry is a three-dimensional inductance extraction program developed at the Massachusetts Institute of Technology. It computes the frequency-dependent self and mutual inductances and resistances between conductors of complex geometry using a multipole-accelerated algorithm.
+FastHenry extracts pure inductance, frequency-dependent self + mutual inductances, resistances between conductors of 3D bodies.
 
-This repository contains the 3.0wr branch maintained by Stephen R. Whiteley (Whiteley Research Inc.), which extends the original MIT release with superconductor support, performance improvements, modern platform compatibility, and a ***vibe-coded*** web-based 3D graphical editor for building and running FastHenry models interactively.
+This repository contains the 3.0wr branch from Whiteley Research which extends the original MIT release with superconductor support, modern improvements. A ***vibe-coded*** web-based 3D GUI is appended by myself.
 
 ![GUI 3D](doc/gui-3d.jpg)
 ![GUI Panel](doc/gui-panel.jpg)
@@ -15,12 +15,6 @@ This repository contains the 3.0wr branch maintained by Stephen R. Whiteley (Whi
 - Results visualization
 
 ## Quick Start
-
-### Prerequisites
-
-- **C compiler** (GCC recommended)
-- **Make**
-- **Python 3.8+** (for the web GUI)
 
 ### Build FastHenry
 
@@ -55,14 +49,11 @@ cd gui
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Optional: install CadQuery for STEP import support
-# pip install cadquery
+pip install cadquery # Optional: install CadQuery for STEP import support
 
 # Start the server
-python server.py
+python server.py # web GUI hosted at localhost:5000
 ```
-
-Open **http://127.0.0.1:5000** in your browser.
 
 ### Command-Line Usage
 
@@ -73,17 +64,6 @@ bin/fasthenry examples/input/pin-con7.inp
 # Output is written to Zc.mat in the working directory
 cat Zc.mat
 ```
-
-Common options:
-
-| Flag | Description |
-|------|-------------|
-| `-s` `ludecomp` | Use LU decomposition (direct solver) |
-| `-s` `iterative` | Use GMRES (iterative solver, default) |
-| `-m` `direct` | Direct matrix-vector products |
-| `-m` `multi` | Multipole-accelerated mat-vec (default) |
-| `-p` `<tol>` | GMRES convergence tolerance |
-| `-o` `<iters>` | Maximum GMRES iterations |
 
 ## GUI Usage Guide
 
